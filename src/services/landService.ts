@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/services/landService.ts
 import { getAuthToken } from '@/lib/auth';
 
@@ -9,7 +10,7 @@ export interface CreateLandDto {
   street: string;
   number: string;
   complement?: string; // Opcional, pode ser undefined no envio
-  district?: string;   // Opcional, pode ser undefined no envio
+  district?: string;  // Opcional, pode ser undefined no envio
   city: string;
   state: string;
   postal_code: string;
@@ -33,9 +34,43 @@ export interface Land {
   country: string;
   created_at: string; // DateTime como string ISO
   updated_at: string; // DateTime como string ISO
-  // 'area' removido
-  // 'status' removido, pois 'availability' é o campo direto do modelo
 }
+
+export interface UpdateLandDto {
+  price?: string;
+  availability?: boolean;
+  street?: string;
+  number?: string;
+  complement?: string;
+  district?: string;
+  city?: string;
+  state?: string;
+  postal_code?: string;
+  country?: string;
+}
+
+// Interface para os tipos de dados que serão retornados pelos endpoints de propostas e investimentos
+// Como o backend retorna arrays, usaremos 'any[]' para flexibilidade,
+// mas você pode criar interfaces mais específicas se souber a estrutura de cada item.
+interface ProjectProposalItem {
+  // Defina as propriedades de uma proposta de projeto aqui, ex:
+  id: string;
+  projectId: string;
+  landId: string;
+  status: string; // Ou o enum AgreementStatus
+  // ... outras propriedades
+}
+
+interface InvestmentItem {
+  // Defina as propriedades de um investimento aqui, ex:
+  id: string;
+  projectId: string;
+  investorId: string;
+  valueInvested: string; // Ou Decimal
+  status: string; // Ou o enum InvestmentStatus
+  // ... outras propriedades
+}
+
 
 export const landService = {
   async createLand(data: CreateLandDto): Promise<Land> {
@@ -82,7 +117,6 @@ export const landService = {
     return response.json();
   },
 
-  // Adicione outras funções como getLandById se necessário
   async getLandById(id: string): Promise<Land> {
     const token = getAuthToken();
     if (!token) {
@@ -102,5 +136,130 @@ export const landService = {
     }
 
     return response.json();
+  },
+
+  async deleteLandById(id: string): Promise<void> {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Usuário não autenticado. Por favor, faça login.');
+    }
+
+    const response = await fetch(`${API_URL}/api/lands/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao deletar terreno.');
+    }
+  },
+
+  async updateLandById(id: string, data: UpdateLandDto): Promise<Land> {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Usuário não autenticado. Por favor, faça login.');
+    }
+
+    const response = await fetch(`${API_URL}/api/lands/${id}`, {
+      method: 'PATCH', // Usamos PATCH para atualização parcial
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao atualizar terreno.');
+    }
+
+    return response.json(); // Retorna o terreno atualizado
+  },
+
+  // --- NOVAS FUNÇÕES DE CONTAGEM ---
+
+  async getMyLandsCount(): Promise<number> {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Usuário não autenticado. Por favor, faça login.');
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/land-owners/my-lands`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao buscar contagem de terrenos.');
+      }
+
+      const lands: Land[] = await response.json();
+      return lands.length;
+    } catch (error: any) {
+      console.error("Erro em getMyLandsCount:", error);
+      throw error; // Re-lança o erro para ser tratado no componente
+    }
+  },
+
+  async getMyProjectProposalsCount(): Promise<number> {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Usuário não autenticado. Por favor, faça login.');
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/land-owners/my-project-proposals`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao buscar contagem de propostas de projeto.');
+      }
+
+      const proposals: ProjectProposalItem[] = await response.json();
+      return proposals.length;
+    } catch (error: any) {
+      console.error("Erro em getMyProjectProposalsCount:", error);
+      throw error;
+    }
+  },
+
+  async getMyInvestmentsCount(): Promise<number> {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Usuário não autenticado. Por favor, faça login.');
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/land-owners/my-investments`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao buscar contagem de investimentos.');
+      }
+
+      const investments: InvestmentItem[] = await response.json();
+      return investments.length;
+    } catch (error: any) {
+      console.error("Erro em getMyInvestmentsCount:", error);
+      throw error;
+    }
   },
 };

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useState, useEffect } from 'react';
@@ -32,8 +33,8 @@ export default function SigninPage() {
         const user_type = result.user.user_type; 
         
         // Redirecionamento baseado no user_type
-        if (user_type === 'land_owner') router.push('/dashboard/owner/lands'); // <-- Ajuste aqui
-        else if (user_type === 'company') router.push('/dashboard/company/projects'); // <-- Ajuste aqui
+        if (user_type === 'land_owner') router.push('/dashboard/owner'); // <-- Ajuste aqui
+        else if (user_type === 'company') router.push('/dashboard/company'); // <-- Ajuste aqui
         else if (user_type === 'investor') router.push('/dashboard/investor/marketplace'); // <-- Ajuste aqui
         else if (user_type === 'monitor') router.push('/dashboard/monitor'); // <-- Ajuste aqui
         else router.push('/dashboard'); // Redirecionamento padrão caso não caia em nenhum dos anteriores
