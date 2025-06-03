@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+
 import { ProjectCard } from "@/components/cards/ProjectCard";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -28,27 +31,40 @@ interface InvestmentOffer {
 }
 
 export default function InvestorMarketplacePage() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [offer, setOffer] = useState<InvestmentOffer>({ amount: 0, message: "" });
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     document.title = "VoltzX | Marketplace de Projetos";
-    fetchProjects();
-  }, []);
+
+    
+    if (!isLoading) {
+      if (!isAuthenticated || user?.user_type !== "investor") {
+        router.push("/signin");
+      } else {
+        fetchProjects();
+      }
+    }
+  }, [isAuthenticated, isLoading, user]);
 
   async function fetchProjects() {
     setLoading(true);
+    setError("");
     try {
       const res = await fetch("/api/projects");
       if (!res.ok) throw new Error("Erro ao buscar projetos");
       const data = await res.json();
       setProjects(data);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      setError("Erro ao carregar os projetos. Tente novamente mais tarde.");
       toast.error("Erro ao carregar os projetos.");
     } finally {
       setLoading(false);
@@ -85,21 +101,35 @@ export default function InvestorMarketplacePage() {
 
       toast.success("Oferta enviada com sucesso!");
       closeOfferModal();
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      setError("Falha ao enviar a oferta. Tente novamente mais tarde.");
       toast.error("Falha ao enviar a oferta.");
     }
   }
 
+  
   const filteredProjects = projects.filter((p) =>
     p.title.toLowerCase().includes(search.toLowerCase())
   );
 
+  if (isLoading || loading)
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        Carregando projetos...
+      </div>
+    );
+
+  if (!isAuthenticated || user?.user_type !== "investor") return null;
+
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4 text-yellow-600">
+    <div className="p-6 sm:p-8 min-h-screen bg-gray-100">
+      <h1 className="text-3xl font-bold text-yellow-500 mb-6">
         Marketplace de Projetos
       </h1>
+
+      {error && (
+        <div className="mb-4 text-red-600 font-semibold">{error}</div>
+      )}
 
       <Input
         placeholder="Buscar projetos..."
@@ -108,18 +138,16 @@ export default function InvestorMarketplacePage() {
         className="mb-6"
       />
 
-      {loading ? (
-        <p className="text-gray-500">Carregando projetos...</p>
-      ) : filteredProjects.length === 0 ? (
-        <p>Nenhum projeto encontrado.</p>
+      {filteredProjects.length === 0 ? (
+        <p className="text-center text-gray-500">Nenhum projeto encontrado.</p>
       ) : (
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map((project) => (
-            <div key={project.id} className="border rounded p-4">
+            <div key={project.id} className="border rounded-lg p-4 bg-white shadow-sm">
               <ProjectCard project={project} />
               <button
                 onClick={() => openOfferModal(project)}
-                className="mt-2 bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+                className="mt-4 bg-yellow-500 hover:bg-yellow-600 rounded-2xl px-6 py-2 shadow-md text-white w-full"
               >
                 Fazer Oferta
               </button>
@@ -129,9 +157,15 @@ export default function InvestorMarketplacePage() {
       )}
 
       {modalOpen && selectedProject && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded p-6 max-w-md w-full">
-            <h2 className="text-xl font-bold mb-4">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={closeOfferModal}
+        >
+          <div
+            className="bg-white rounded-lg max-w-xl w-full p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold mb-4">
               Fazer Oferta - {selectedProject.title}
             </h2>
 
@@ -163,13 +197,13 @@ export default function InvestorMarketplacePage() {
             <div className="flex justify-end gap-2">
               <button
                 onClick={closeOfferModal}
-                className="px-4 py-2 rounded border border-gray-400"
+                className="mt-2 bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
               >
                 Cancelar
               </button>
               <button
                 onClick={submitOffer}
-                className="px-4 py-2 rounded bg-yellow-500 text-white hover:bg-yellow-600"
+                className="mt-2 bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded text-white"
               >
                 Enviar Oferta
               </button>
@@ -180,3 +214,4 @@ export default function InvestorMarketplacePage() {
     </div>
   );
 }
+

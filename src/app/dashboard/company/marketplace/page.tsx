@@ -2,141 +2,186 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
-function IconProjects() {
-  return (
-    <svg className="w-10 h-10 text-yellow-500 mb-3" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="7" height="7" />
-      <rect x="14" y="3" width="7" height="7" />
-      <rect x="14" y="14" width="7" height="7" />
-      <rect x="3" y="14" width="7" height="7" />
-    </svg>
-  );
-}
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-function IconLightning() {
-  return (
-    <svg className="w-10 h-10 text-yellow-500 mb-3" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="13 2 13 13 18 13 11 22 11 11 6 11 13 2" />
-    </svg>
-  );
-}
-
-function IconInvestment() {
-  return (
-    <svg className="w-10 h-10 text-yellow-500 mb-3" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 8v8M8 12h8M21 12c0 5-4 9-9 9s-9-4-9-9 4-9 9-9 9 4 9 9z" />
-    </svg>
-  );
+function Icon({ children }: { children: React.ReactNode }) {
+  return <div className="text-yellow-500 w-10 h-10 mb-2">{children}</div>;
 }
 
 export default function MarketplacePage() {
-  const [terrenos, setTerrenos] = useState([]);
-  const [projetos, setProjetos] = useState([]);
-  const [investimentos, setInvestimentos] = useState([]);
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+
+  const [terrenos, setTerrenos] = useState<any[]>([]);
+  const [projetos, setProjetos] = useState<any[]>([]);
+  const [investimentos, setInvestimentos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
 
   useEffect(() => {
     document.title = "Marketplace | VoltzX";
-
-    async function fetchData() {
-      try {
-        const [resTerrenos, resProjetos, resInvest] = await Promise.all([
-          fetch("/api/terrenos"),
-          fetch("/api/projetos"),
-          fetch("/api/investimentos"),
-        ]);
-
-        if (!resTerrenos.ok || !resProjetos.ok || !resInvest.ok) {
-          throw new Error("Erro ao carregar os dados");
-        }
-
-        const [terrenosData, projetosData, investimentosData] = await Promise.all([
-          resTerrenos.json(),
-          resProjetos.json(),
-          resInvest.json(),
-        ]);
-
-        setTerrenos(terrenosData);
-        setProjetos(projetosData);
-        setInvestimentos(investimentosData);
-      } catch (err) {
-        setErro("Erro ao buscar dados. Tente novamente mais tarde.");
-      } finally {
-        setLoading(false);
-      }
+    if (!isLoading && (!isAuthenticated || user?.user_type !== "company")) {
+      router.push("/signin");
+    } else if (isAuthenticated && user?.user_type === "company") {
+      fetchData();
     }
+  }, [isAuthenticated, isLoading, user]);
 
-    fetchData();
-  }, []);
+  async function fetchData() {
+    try {
+      const [landsRes, projectsRes, investmentsRes] = await Promise.all([
+        fetch("/api/lands/available"),
+        fetch("/api/projects/company"),
+        fetch("/api/investments"),
+      ]);
+
+      if (!landsRes.ok || !projectsRes.ok || !investmentsRes.ok) {
+        throw new Error("Erro ao buscar dados do servidor");
+      }
+
+      const lands = await landsRes.json();
+      const projects = await projectsRes.json();
+      const investments = await investmentsRes.json();
+
+      setTerrenos(lands);
+      setProjetos(projects);
+      setInvestimentos(investments);
+    } catch (error) {
+      setErro("Erro ao buscar dados. Tente novamente mais tarde.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (isLoading || loading)
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        Carregando...
+      </div>
+    );
+  if (!isAuthenticated || user?.user_type !== "company") return null;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100">
-      <div className="fixed top-0 left-0 right-0 z-50">
-        <div className="bg-yellow-400 h-4 w-full" />
-        <div className="bg-black h-1 w-full" />
-        <header className="bg-white h-14 flex items-center justify-between px-6 shadow-md">
-          <h1 className="text-xl font-bold text-gray-800">VoltzX Marketplace</h1>
-          <nav className="space-x-4 flex items-center">
-            <Link href="/dashboard/company/projects" className="text-gray-700 hover:text-yellow-500 font-semibold transition">
-              Meus Projetos
-            </Link>
-            <Link href="/dashboard/company/chat" className="bg-yellow-400 text-white px-4 py-1 rounded-md font-semibold hover:bg-yellow-500 transition">
-              Chat
-            </Link>
-          </nav>
-        </header>
+    <div className="min-h-screen bg-gray-100 py-6">
+      <div className="bg-white shadow-md py-4 px-6 flex justify-between items-center">
+        <h1 className="text-xl font-bold text-gray-800">Marketplace da Empresa</h1>
+        <nav className="space-x-4">
+          <Link
+            href="/dashboard/company/projects"
+            className="text-sm text-gray-700 hover:text-yellow-500"
+          >
+            Meus Projetos
+          </Link>
+          <Link
+            href="/dashboard/company/chat"
+            className="text-sm bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+          >
+            Chat
+          </Link>
+        </nav>
       </div>
 
-      <div className="h-[69px]" />
+      {erro && (
+        <div className="max-w-6xl mx-auto px-4 mt-4 text-red-600 font-semibold">
+          {erro}
+        </div>
+      )}
 
-      <main className="flex-grow container mx-auto px-6 py-12 max-w-5xl text-center">
-        <div className="bg-white rounded-xl shadow-lg px-8 py-12">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">
-            Explore oportunidades com terrenos disponíveis
-          </h2>
-          <p className="text-gray-600 text-lg mb-10 max-w-2xl mx-auto">
-            Acesse terrenos cadastrados por proprietários e envie propostas para iniciar projetos de energia solar com o apoio de investidores.
-          </p>
+      <main className="max-w-6xl mx-auto px-4 mt-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon>
+                  <svg
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    viewBox="0 0 24 24"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                  </svg>
+                </Icon>
+                Terrenos Disponíveis
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-sm text-gray-600 space-y-1">
+                {terrenos.slice(0, 3).map((t) => (
+                  <li key={t.id}>• {t.nome || `${t.street}, ${t.city}`}</li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
 
-          {loading ? (
-            <p className="text-gray-600">Carregando dados...</p>
-          ) : erro ? (
-            <p className="text-red-500">{erro}</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mt-8 text-left">
-              <div className="flex flex-col items-center">
-                <IconProjects />
-                <h3 className="font-bold text-xl text-gray-800 mb-2">Terrenos Disponíveis</h3>
-                <ul className="text-gray-600 text-sm space-y-1">
-                  {terrenos.slice(0, 3).map((t: any) => (
-                    <li key={t.id}>• {t.nome || "Terreno Sem Nome"}</li>
-                  ))}
-                </ul>
-              </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon>
+                  <svg
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    viewBox="0 0 24 24"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="13 2 13 13 18 13 11 22 11 11 6 11 13 2" />
+                  </svg>
+                </Icon>
+                Projetos em Andamento
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-sm text-gray-600 space-y-1">
+                {projetos.slice(0, 3).map((p) => (
+                  <li key={p.id}>• {p.titulo}</li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
 
-              <div className="flex flex-col items-center">
-                <IconLightning />
-                <h3 className="font-bold text-xl text-gray-800 mb-2">Projetos em Andamento</h3>
-                <ul className="text-gray-600 text-sm space-y-1">
-                  {projetos.slice(0, 3).map((p: any) => (
-                    <li key={p.id}>• {p.titulo || "Projeto Sem Título"}</li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="flex flex-col items-center">
-                <IconInvestment />
-                <h3 className="font-bold text-xl text-gray-800 mb-2">Ofertas de Investimento</h3>
-                <ul className="text-gray-600 text-sm space-y-1">
-                  {investimentos.slice(0, 3).map((i: any) => (
-                    <li key={i.id}>• {i.nomeInvestidor || "Investidor Anônimo"}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          )}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Icon>
+                  <svg
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    viewBox="0 0 24 24"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 8v8M8 12h8M21 12c0 5-4 9-9 9s-9-4-9-9 4-9 9-9 9 4 9 9z" />
+                  </svg>
+                </Icon>
+                Ofertas de Investimento
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-sm text-gray-600 space-y-1">
+                {investimentos.slice(0, 3).map((i) => (
+                  <li key={i.id}>
+                    • {i.nomeInvestidor || i.user?.name || "Investidor Anônimo"}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>
