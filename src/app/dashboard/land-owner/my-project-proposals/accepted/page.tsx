@@ -104,9 +104,9 @@ export default function AcceptedProjectProposalsPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <span className="font-semibold">Status:</span>
                   <span className={`px-2 py-1 rounded-full text-xs font-semibold
-                    ${selectedProposalDetails.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' : ''}
-                    ${selectedProposalDetails.status === 'ACCEPTED' ? 'bg-green-100 text-green-800' : ''}
-                    ${selectedProposalDetails.status === 'REJECTED' ? 'bg-red-100 text-red-800' : ''}
+                    ${selectedProposalDetails.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ''}
+                    ${selectedProposalDetails.status === 'accepted' ? 'bg-green-100 text-green-800' : ''}
+                    ${selectedProposalDetails.status === 'rejected' ? 'bg-red-100 text-red-800' : ''}
                   `}>
                     {selectedProposalDetails.status}
                   </span>

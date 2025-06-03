@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getAuthToken } from '@/lib/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -50,7 +51,7 @@ export interface UpdateLandDto {
 // Interface para os tipos de dados que serão retornados pelos endpoints de propostas e investimentos
 // Como o backend retorna arrays, usaremos 'any[]' para flexibilidade,
 // mas você pode criar interfaces mais específicas se souber a estrutura de cada item.
-interface ProjectProposalItem {
+export interface ProjectProposalItem {
   // Defina as propriedades de uma proposta de projeto aqui, ex:
   id: string;
   projectId: string;
@@ -59,7 +60,7 @@ interface ProjectProposalItem {
   // ... outras propriedades
 }
 
-interface InvestmentItem {
+export interface InvestmentItem {
   // Defina as propriedades de um investimento aqui, ex:
   id: string;
   projectId: string;
@@ -155,5 +156,68 @@ export const landService = {
     }
 
     return response.json();
+  },
+
+  async getMyLandsCount(): Promise<number> {
+    const token = getAuthToken(); // Obtenha o token de forma consistente
+    if (!token) {
+      throw new Error('Usuário não autenticado. Por favor, faça login.');
+    }
+
+    const response = await fetch(`${API_URL}/api/land-owners/my-lands`, { // Use fetch
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao buscar contagem de terrenos.');
+    }
+    const data: Land[] = await response.json(); // Converta para JSON
+    return data.length; // Assumindo que o endpoint retorna um array de terrenos
+  },
+
+async getMyProjectProposalsCount(): Promise<number> {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Usuário não autenticado. Por favor, faça login.');
+    }
+
+    const response = await fetch(`${API_URL}/api/land-owners/my-project-proposals`, { // Use fetch
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao buscar contagem de propostas.');
+    }
+    const data: any[] = await response.json(); // Pode ser ProjectProposal[]
+    return data.length; // Assumindo que o endpoint retorna um array
+  },
+ async getMyInvestmentsCount(): Promise<number> {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Usuário não autenticado. Por favor, faça login.');
+    }
+
+    // Novamente, assumindo que você tem um endpoint para investimentos no landService ou que ele é um proxy
+    const response = await fetch(`${API_URL}/api/land-owners/my-investments`, { // Use fetch
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Erro ao buscar contagem de investimentos.');
+    }
+    const data: any[] = await response.json(); // Pode ser InvestmentItem[]
+    return data.length; // Assumindo que o endpoint retorna um array
   },
 };

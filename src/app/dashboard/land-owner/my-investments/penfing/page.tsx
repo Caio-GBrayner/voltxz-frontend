@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { OwnerDashboardNavbar } from '@/components/app/lands/OwnerDashboardNavbar';
 import { InvestmentsTable } from '@/components/app/investments/InvestmentsTable'; // Importe o componente da tabela
-import { investmentService, Investment } from '@/services/investmentsService';
+import { investmentService, Investment, Project } from '@/services/investmentsService';
 import {
   Dialog,
   DialogContent,
