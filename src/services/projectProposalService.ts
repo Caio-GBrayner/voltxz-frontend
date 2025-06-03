@@ -1,11 +1,5 @@
-// src/services/projectProposalService.ts
 import { getAuthToken } from '@/lib/auth';
 
-// Remova esta linha se estiver presente:
-// import { AgreementStatus, OwnerAgreementStatus, SolarProjectStatus } from 'generated/prisma';
-
-// Definição manual dos tipos de status que você usa no frontend.
-// Isso evita a dependência de 'generated/prisma' no frontend.
 export type AgreementStatus = 'pending' | 'accepted' | 'rejected';
 export type OwnerAgreementStatus = 'pending' | 'accepted' | 'rejected'; // Ajuste conforme o seu enum real se for usado no frontend
 export type SolarProjectStatus = 'pending' | 'active' | 'completed' | 'canceled'; // Ajuste conforme o seu enum real se for usado no frontend

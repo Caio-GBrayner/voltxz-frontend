@@ -33,7 +33,7 @@ export default function SigninPage() {
         const user_type = result.user.user_type; 
         
         // Redirecionamento baseado no user_type
-        if (user_type === 'land_owner') router.push('/dashboard/owner'); // <-- Ajuste aqui
+        if (user_type === 'land_owner') router.push('/dashboard/land-owner'); // <-- Ajuste aqui
         else if (user_type === 'company') router.push('/dashboard/company'); // <-- Ajuste aqui
         else if (user_type === 'investor') router.push('/dashboard/investor/marketplace'); // <-- Ajuste aqui
         else if (user_type === 'monitor') router.push('/dashboard/monitor'); // <-- Ajuste aqui

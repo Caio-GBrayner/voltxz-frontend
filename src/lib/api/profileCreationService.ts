@@ -1,6 +1,7 @@
 // src/services/profileCreationService.ts
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://backend-container:3001";
+
 
 // Definir as interfaces para os DTOs de criação
 export interface CreateLandOwnerDto {

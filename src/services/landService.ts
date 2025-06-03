@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// src/services/landService.ts
 import { getAuthToken } from '@/lib/auth';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -138,14 +136,14 @@ export const landService = {
     return response.json();
   },
 
-  async deleteLandById(id: string): Promise<void> {
+  async getAllLands(): Promise<Land[]> {
     const token = getAuthToken();
     if (!token) {
       throw new Error('Usuário não autenticado. Por favor, faça login.');
     }
 
-    const response = await fetch(`${API_URL}/api/lands/${id}`, {
-      method: 'DELETE',
+    const response = await fetch(`${API_URL}/api/lands`, {
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -153,113 +151,9 @@ export const landService = {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Erro ao deletar terreno.');
-    }
-  },
-
-  async updateLandById(id: string, data: UpdateLandDto): Promise<Land> {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Usuário não autenticado. Por favor, faça login.');
+      throw new Error(errorData.message || 'Erro ao buscar terrenos.');
     }
 
-    const response = await fetch(`${API_URL}/api/lands/${id}`, {
-      method: 'PATCH', // Usamos PATCH para atualização parcial
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Erro ao atualizar terreno.');
-    }
-
-    return response.json(); // Retorna o terreno atualizado
-  },
-
-  // --- NOVAS FUNÇÕES DE CONTAGEM ---
-
-  async getMyLandsCount(): Promise<number> {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Usuário não autenticado. Por favor, faça login.');
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/api/land-owners/my-lands`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao buscar contagem de terrenos.');
-      }
-
-      const lands: Land[] = await response.json();
-      return lands.length;
-    } catch (error: any) {
-      console.error("Erro em getMyLandsCount:", error);
-      throw error; // Re-lança o erro para ser tratado no componente
-    }
-  },
-
-  async getMyProjectProposalsCount(): Promise<number> {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Usuário não autenticado. Por favor, faça login.');
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/api/land-owners/my-project-proposals`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao buscar contagem de propostas de projeto.');
-      }
-
-      const proposals: ProjectProposalItem[] = await response.json();
-      return proposals.length;
-    } catch (error: any) {
-      console.error("Erro em getMyProjectProposalsCount:", error);
-      throw error;
-    }
-  },
-
-  async getMyInvestmentsCount(): Promise<number> {
-    const token = getAuthToken();
-    if (!token) {
-      throw new Error('Usuário não autenticado. Por favor, faça login.');
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/api/land-owners/my-investments`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao buscar contagem de investimentos.');
-      }
-
-      const investments: InvestmentItem[] = await response.json();
-      return investments.length;
-    } catch (error: any) {
-      console.error("Erro em getMyInvestmentsCount:", error);
-      throw error;
-    }
+    return response.json();
   },
 };
